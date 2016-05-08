@@ -45,7 +45,7 @@ function plasmafy {
     echo "Installing plasma rootfs"
     adb push ~/.cache/plasmaphone/livecd..rootfs.tar.gz
     adb shell mkdir -p /data/lxc/containers/system/rootfs/
-    adb shell tar xvf /tmp/livecd..rootfs.tar.gz -C /data/lxc/containers/system/rootfs/
+    adb shell tar xf /tmp/livecd..rootfs.tar.gz -C /data/lxc/containers/system/rootfs/
     adb push ~/.cache/plasmaphone/lxc-system-config /data/lxc/containers/system/
 
     echo "Done, enjoy plasma"
