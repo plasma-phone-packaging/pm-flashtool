@@ -1,10 +1,14 @@
 #!/bin/bash
+set -ex
 
 function download {
     mkdir -p ~/.cache/plasmaphone/ && cd ~/.cache/plasmaphone/
     # download cyanogenmod
     wget -c http://neon.plasma-mobile.org/cm-stripped.zip
     wget -c http://neon.plasma-mobile.org/twrp-3.0.2-0-hammerhead.img
+    wget -c https://jenkins.linuxcontainers.org/job/lxc-build-android/lastSuccessfulBuild/artifact/lxc-android.tar.gz
+    wget -c http://mobile.neon.pangea.pub:8080/job/img_phone_xenial_armhf/lastSuccessfulBuild/artifact/result/livecd..rootfs.tar.gz
+    wget -c https://raw.githubusercontent.com/plasma-phone-packaging/CM/master/lxc-system-config
     md5sum ~/.cache/plasmaphone/twrp-3.0.2-0-hammerhead.img
 }
 
@@ -29,5 +33,25 @@ function flash-phone {
     echo "Done flashing cyanogenmod, now flashing rootfs and lxc"
 }
 
+function plasmafy {
+    adb root
+    sleep 5
+    adb wait-for-device
+
+    echo "Installing lxc userspace tools"
+    adb push ~/.cache/plasmaphone/lxc-android.tar.gz /tmp
+    adb shell tar xf /tmp/lxc-android.tar.gz
+
+    echo "Installing plasma rootfs"
+    adb push ~/.cache/plasmaphone/livecd..rootfs.tar.gz
+    adb shell mkdir -p /data/lxc/containers/system/rootfs/
+    adb shell tar xvf /tmp/livecd..rootfs.tar.gz -C /data/lxc/containers/system/rootfs/
+    adb push ~/.cache/plasmaphone/lxc-system-config /data/lxc/containers/system/
+
+    echo "Done, enjoy plasma"
+    adb reboot
+}
+
 download
 flash-phone
+plasmafy
