@@ -39,13 +39,14 @@ function plasmafy {
     adb wait-for-device
 
     echo "Installing lxc userspace tools"
-    adb push ~/.cache/plasmaphone/lxc-android.tar.gz /tmp
-    adb shell tar xf /tmp/lxc-android.tar.gz
+    adb push ~/.cache/plasmaphone/lxc-android.tar.gz /data/
+    adb shell tar xf /data/lxc-android.tar.gz
 
     echo "Installing plasma rootfs"
-    adb push ~/.cache/plasmaphone/livecd..rootfs.tar.gz
+    adb push ~/.cache/plasmaphone/livecd..rootfs.tar.gz /data/
     adb shell mkdir -p /data/lxc/containers/system/rootfs/
-    adb shell tar xf /tmp/livecd..rootfs.tar.gz -C /data/lxc/containers/system/rootfs/
+    adb shell tar xf /data/livecd..rootfs.tar.gz -C /data/lxc/containers/system/rootfs/
+    adb shell rm /data/livecd..rootfs.tar.gz /data/lxc-android.tar.gz
     adb push ~/.cache/plasmaphone/lxc-system-config /data/lxc/containers/system/
 
     echo "Done, enjoy plasma"
