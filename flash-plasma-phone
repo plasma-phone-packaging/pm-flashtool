@@ -6,6 +6,7 @@ function download {
     # download cyanogenmod
     wget -c http://neon.plasma-mobile.org/cm-stripped.zip
     wget -c http://neon.plasma-mobile.org/twrp-3.0.2-0-hammerhead.img
+    rm lxc-android.tar.gz
     wget -c https://jenkins.linuxcontainers.org/job/lxc-build-android/lastSuccessfulBuild/artifact/lxc-android.tar.gz
     wget -c http://mobile.neon.pangea.pub:8080/job/img_phone_xenial_armhf/lastSuccessfulBuild/artifact/result/livecd..rootfs.tar.gz
     wget -c https://raw.githubusercontent.com/plasma-phone-packaging/CM/master/lxc-system-config
@@ -47,10 +48,16 @@ function plasmafy {
     adb shell mkdir -p /data/lxc/containers/system/rootfs/
     adb shell tar xf /data/livecd..rootfs.tar.gz -C /data/lxc/containers/system/rootfs/
     adb shell rm /data/livecd..rootfs.tar.gz /data/lxc-android.tar.gz
-    adb push ~/.cache/plasmaphone/lxc-system-config /data/lxc/containers/system/
+    adb push ~/.cache/plasmaphone/lxc-system-config /data/lxc/containers/system/config
 
-    echo "Done, enjoy plasma"
+    echo "hacks"
+    adb shell rm /data/lxc/containers/system/rootfs/etc/init/lxc-android-boot.conf
+    adb shell mkdir -p /data/lxc/containers/system/rootfs/sys/fs/cgroup/
+    adb push $PWD/hack /data/
+    adb shell /data/hack
+
     adb reboot
+    echo "Done flashing"
 }
 
 download
