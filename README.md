@@ -20,6 +20,8 @@ Tool for Flashing CM+PM as LXC Container
 To run..
 
 ```
+git clone https://github.com/plasma-phone-packaging/pm-flashtool.git
+cd pm-flashtool
 ./flash-plasma-phone
 ```
 
