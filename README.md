@@ -14,3 +14,26 @@ Tool for Flashing CM+PM as LXC Container
 - pushes it to /cache/recovery/command
 - Reboots into recovery
 - TODO: flash pm rootfs
+
+To run..
+
+```
+./flash-plasma-phone
+```
+
+This
+
+a) Downloads the files required in ~/.cache/plasmaphone
+b) Flashes cyanogenmod
+c) Puts togather lxc and plasma rootfs
+
+After that you can run
+
+```
+adb root
+adb shell
+mkdir -p /data/lxc/containers/system/rootfs/sys/fs/cgroup/
+lxc-start -n system -F
+```
+
+to get login console
