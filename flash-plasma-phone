@@ -51,13 +51,13 @@ function plasmafy {
     adb push ~/.cache/plasmaphone/lxc-system-config /data/lxc/containers/system/config
 
     echo "hacks"
-    adb shell rm /data/lxc/containers/system/rootfs/etc/init/lxc-android-boot.conf
-    adb shell mkdir -p /data/lxc/containers/system/rootfs/sys/fs/cgroup/
-    adb push $PWD/hack /data/
-    adb shell /data/hack
+    #adb shell rm /data/lxc/containers/system/rootfs/etc/init/lxc-android-boot.conf
+    #adb shell mkdir -p /data/lxc/containers/system/rootfs/sys/fs/cgroup/
+    #adb push $PWD/hack /data/
+    #adb shell /data/hack
 
-    adb reboot
-    echo "Done flashing"
+    #adb reboot
+    #echo "Done flashing"
 }
 
 download
