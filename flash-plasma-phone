@@ -6,7 +6,7 @@ function download {
     # download cyanogenmod
     wget -c http://neon.plasma-mobile.org/cm-stripped.zip
     wget -c http://neon.plasma-mobile.org/twrp-3.0.2-0-hammerhead.img
-    rm lxc-android.tar.gz
+    rm -f lxc-android.tar.gz
     wget -c https://jenkins.linuxcontainers.org/job/lxc-build-android/lastSuccessfulBuild/artifact/lxc-android.tar.gz
     wget -c http://mobile.neon.pangea.pub:8080/job/img_phone_xenial_armhf/lastSuccessfulBuild/artifact/result/livecd..rootfs.tar.gz
     wget -c https://raw.githubusercontent.com/plasma-phone-packaging/CM/master/lxc-system-config
