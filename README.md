@@ -1,7 +1,7 @@
-# flashtool
+# pm-flashtool
 Tool for Flashing CM+PM as LXC Container
 
-# Typical workflow..
+# Typical workflow.. (How it works)
 
 - Waits for device to be in fastboot mode,
 - Downloads twrp recovery and flashes into recovery
@@ -14,6 +14,8 @@ Tool for Flashing CM+PM as LXC Container
 - pushes it to /cache/recovery/command
 - Reboots into recovery
 - TODO: flash pm rootfs
+
+# Howto use
 
 To run..
 
