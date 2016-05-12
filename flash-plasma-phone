@@ -25,16 +25,16 @@ function flash-phone {
 
     echo "Flashing recovery"
     fastboot format cache
+    fastboot format userdata
     fastboot flash recovery ~/.cache/plasmaphone/twrp-3.0.2-0-hammerhead.img
     fastboot boot ~/.cache/plasmaphone/twrp-3.0.2-0-hammerhead.img
 
     wait-for-device
 
     echo "Performing complete wipe first"
-    echo "--wipe_data" > /tmp/command
-    echo "--update_package=/sdcard/cm.zip" >> /tmp/command
+    echo "--update_package=/cache/cm.zip" > /tmp/command
     adb push /tmp/command /cache/recovery/command
-    adb push ~/.cache/plasmaphone/cm-stripped.zip /sdcard/cm.zip
+    adb push ~/.cache/plasmaphone/cm-stripped.zip /cache/cm.zip
 
     adb reboot recovery
     sleep 2
