@@ -1,13 +1,19 @@
 #!/bin/bash
-set -ex
+set -e
+
+function wait-for-device {
+    until adb shell true 2> /dev/null
+    do
+        sleep 1
+    done
+}
 
 function download {
     mkdir -p ~/.cache/plasmaphone/ && cd ~/.cache/plasmaphone/
     # download cyanogenmod
     wget -c http://neon.plasma-mobile.org/cm-stripped.zip
     wget -c http://neon.plasma-mobile.org/twrp-3.0.2-0-hammerhead.img
-    rm -f lxc-android.tar.gz
-    wget -c https://jenkins.linuxcontainers.org/job/lxc-build-android/lastSuccessfulBuild/artifact/lxc-android.tar.gz
+    [ -e lxc-android.tar.gz ] || wget -c https://jenkins.linuxcontainers.org/job/lxc-build-android/lastSuccessfulBuild/artifact/lxc-android.tar.gz
     wget -c http://mobile.neon.pangea.pub:8080/job/img_phone_xenial_armhf/lastSuccessfulBuild/artifact/result/livecd..rootfs.tar.gz
     wget -c https://raw.githubusercontent.com/plasma-phone-packaging/CM/master/lxc-system-config
     md5sum ~/.cache/plasmaphone/twrp-3.0.2-0-hammerhead.img
@@ -22,14 +28,17 @@ function flash-phone {
     fastboot flash recovery ~/.cache/plasmaphone/twrp-3.0.2-0-hammerhead.img
     fastboot boot ~/.cache/plasmaphone/twrp-3.0.2-0-hammerhead.img
 
-    sleep 10
-    echo "Flashing cyanogenmod now"
-    adb push ~/.cache/plasmaphone/cm-stripped.zip /cache/cm.zip
-    echo "--update_package=/cache/cm.zip" > /tmp/command
+    wait-for-device
+
+    echo "Performing complete wipe first"
+    echo "--wipe_data" > /tmp/command
+    echo "--update_package=/sdcard/cm.zip" >> /tmp/command
     adb push /tmp/command /cache/recovery/command
+    adb push ~/.cache/plasmaphone/cm-stripped.zip /sdcard/cm.zip
 
     adb reboot recovery
-    adb wait-for-device
+    sleep 2
+    wait-for-device
 
     echo "Done flashing cyanogenmod, now flashing rootfs and lxc"
 }
@@ -50,14 +59,9 @@ function plasmafy {
     adb shell rm /data/livecd..rootfs.tar.gz /data/lxc-android.tar.gz
     adb push ~/.cache/plasmaphone/lxc-system-config /data/lxc/containers/system/config
 
-    echo "hacks"
-    #adb shell rm /data/lxc/containers/system/rootfs/etc/init/lxc-android-boot.conf
-    #adb shell mkdir -p /data/lxc/containers/system/rootfs/sys/fs/cgroup/
-    #adb push $PWD/hack /data/
-    #adb shell /data/hack
-
-    #adb reboot
-    #echo "Done flashing"
+    # TODO: FIXME: should not be needed
+    adb shell mkdir -p /data/lxc/containers/system/rootfs/sys/fs/cgroup/
+    echo "Done flashing"
 }
 
 download
