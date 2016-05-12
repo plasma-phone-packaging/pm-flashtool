@@ -1,5 +1,5 @@
 #!/bin/bash
-set -e
+set -ex
 
 function wait-for-device {
     until adb shell true 2> /dev/null
