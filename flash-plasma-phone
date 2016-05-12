@@ -38,7 +38,7 @@ function flash-phone {
 
     adb reboot recovery
     sleep 2
-    wait-for-device
+    adb wait-for-device
 
     echo "Done flashing cyanogenmod, now flashing rootfs and lxc"
 }
