@@ -10,13 +10,13 @@ function wait-for-device {
 
 function download {
     mkdir -p ~/.cache/plasmaphone/ && cd ~/.cache/plasmaphone/
-    # download cyanogenmod
+    rm -rf *
     wget -c http://neon.plasma-mobile.org/cm-stripped.zip
     wget -c http://neon.plasma-mobile.org/twrp-3.0.2-0-hammerhead.img
-    [ -e lxc-android.tar.gz ] || wget -c https://jenkins.linuxcontainers.org/job/lxc-build-android/lastSuccessfulBuild/artifact/lxc-android.tar.gz
+    wget -c https://jenkins.linuxcontainers.org/job/lxc-build-android/lastSuccessfulBuild/artifact/lxc-android.tar.gz
     wget -c http://mobile.neon.pangea.pub:8080/job/img_phone_xenial_armhf/lastSuccessfulBuild/artifact/result/livecd..rootfs.tar.gz
     wget -c https://raw.githubusercontent.com/plasma-phone-packaging/CM/master/lxc-system-config
-    md5sum ~/.cache/plasmaphone/twrp-3.0.2-0-hammerhead.img
+    md5sum *
 }
 
 function flash-phone {
@@ -64,6 +64,21 @@ function plasmafy {
     echo "Done flashing"
 }
 
-download
+while getopts ":c" opt; do
+  case $opt in
+    c)
+	  echo "Option provided to use cache, not downloading files again"
+	  NOCACHE=1
+      ;;
+    \?)
+      echo "Invalid option: -$OPTARG" >&2
+      exit 1
+      ;;
+  esac
+done
+
+if [ -z "$NOCACHE" ]; then
+	download
+fi
 flash-phone
 plasmafy
