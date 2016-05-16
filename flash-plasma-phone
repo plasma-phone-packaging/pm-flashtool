@@ -10,13 +10,24 @@ function wait-for-device {
 
 function download {
     mkdir -p ~/.cache/plasmaphone/ && cd ~/.cache/plasmaphone/
-    rm -rf *
-    wget -c http://neon.plasma-mobile.org/cm-stripped.zip
+
+    rm *
+    # timestamp file for latest images
+    wget -c http://neon.plasma-mobile.org/cm_stamp
+    wget -c http://neon.plasma-mobile.org/rootfs_stamp
+
+    # stripped cm file
+    wget -c http://neon.plasma-mobile.org/cm/cm-`cat cm_stamp`.zip
+    ln -s cm-`cat cm_stamp`.zip cm-stripped.zip
+    # twrp recovery
     wget -c http://neon.plasma-mobile.org/twrp-3.0.2-0-hammerhead.img
+    # lxc userspace tools
     wget -c https://jenkins.linuxcontainers.org/job/lxc-build-android/lastSuccessfulBuild/artifact/lxc-android.tar.gz
-    wget -c http://mobile.neon.pangea.pub:8080/job/img_phone_xenial_armhf/lastSuccessfulBuild/artifact/result/livecd..rootfs.tar.gz
+    # rootfs for plasma mobile
+    wget -c http://neon.plasma-mobile.org/rootfs/plasma-rootfs-`cat rootfs_stamp`.tar.gz
+    ln -s plasma-rootfs-`cat rootfs_stamp`.zip plasma-rootfs.tar.gz
+    # config for lxc container
     wget -c https://raw.githubusercontent.com/plasma-phone-packaging/CM/master/lxc-system-config
-    md5sum *
 }
 
 function flash-phone {
@@ -34,7 +45,7 @@ function flash-phone {
     echo "Performing complete wipe first"
     echo "--update_package=/cache/cm.zip" > /tmp/command
     adb push /tmp/command /cache/recovery/command
-    adb push ~/.cache/plasmaphone/cm-stripped.zip /cache/cm.zip
+    adb push `readlink -f ~/.cache/plasmaphone/cm-stripped.zip` /cache/cm.zip
 
     adb reboot recovery
     sleep 2
@@ -53,10 +64,10 @@ function plasmafy {
     adb shell tar xf /data/lxc-android.tar.gz
 
     echo "Installing plasma rootfs"
-    adb push ~/.cache/plasmaphone/livecd..rootfs.tar.gz /data/
+    adb push `readlink -f ~/.cache/plasmaphone/plasma-rootfs.tar.gz` /data/plasma-rootfs.tar.gz
     adb shell mkdir -p /data/lxc/containers/system/rootfs/
-    adb shell tar xf /data/livecd..rootfs.tar.gz -C /data/lxc/containers/system/rootfs/
-    adb shell rm /data/livecd..rootfs.tar.gz /data/lxc-android.tar.gz
+    adb shell tar xf /data/plasma-rootfs.tar.gz -C /data/lxc/containers/system/rootfs/
+    adb shell rm /data/plasma-rootfs.tar.gz /data/lxc-android.tar.gz
     adb push ~/.cache/plasmaphone/lxc-system-config /data/lxc/containers/system/config
 
     # TODO: FIXME: should not be needed
@@ -79,6 +90,10 @@ done
 
 if [ -z "$NOCACHE" ]; then
 	download
+    true
 fi
 flash-phone
 plasmafy
+
+echo "flashed cm version `cat ~/.cache/plasmaphone/cm_stamp`"
+echo "flashed plasma rootfs version `cat ~/.cache/plasmaphone/rootfs_stamp`"
