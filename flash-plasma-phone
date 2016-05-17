@@ -1,6 +1,8 @@
 #!/bin/bash
 set -ex
 
+CACHEDIR=cache
+
 function wait-for-device {
     until adb shell true 2> /dev/null
     do
@@ -9,9 +11,9 @@ function wait-for-device {
 }
 
 function download {
-    mkdir -p ~/.cache/plasmaphone/ && cd ~/.cache/plasmaphone/
+    mkdir -p $CACHEDIR/ && cd $CACHEDIR/
 
-    rm *
+    rm -f *
     # timestamp file for latest images
     wget -c http://neon.plasma-mobile.org/cm_stamp
     wget -c http://neon.plasma-mobile.org/rootfs_stamp
@@ -37,15 +39,15 @@ function flash-phone {
     echo "Flashing recovery"
     fastboot format cache
     fastboot format userdata
-    fastboot flash recovery ~/.cache/plasmaphone/twrp-3.0.2-0-hammerhead.img
-    fastboot boot ~/.cache/plasmaphone/twrp-3.0.2-0-hammerhead.img
+    fastboot flash recovery $CACHEDIR/twrp-3.0.2-0-hammerhead.img
+    fastboot boot $CACHEDIR/twrp-3.0.2-0-hammerhead.img
 
     wait-for-device
 
     echo "Performing complete wipe first"
-    echo "--update_package=/cache/cm.zip" > /tmp/command
-    adb push /tmp/command /cache/recovery/command
-    adb push `readlink -f ~/.cache/plasmaphone/cm-stripped.zip` /cache/cm.zip
+    echo "--update_package=/cache/cm.zip" > $CACHEDIR/command
+    adb push $CACHEDIR/command /cache/recovery/command
+    adb push `readlink -f $CACHEDIR/cm-stripped.zip` /cache/cm.zip
 
     adb reboot recovery
     sleep 2
@@ -60,15 +62,15 @@ function plasmafy {
     adb wait-for-device
 
     echo "Installing lxc userspace tools"
-    adb push ~/.cache/plasmaphone/lxc-android.tar.gz /data/
+    adb push $CACHEDIR/lxc-android.tar.gz /data/
     adb shell tar xf /data/lxc-android.tar.gz
 
     echo "Installing plasma rootfs"
-    adb push `readlink -f ~/.cache/plasmaphone/plasma-rootfs.tar.gz` /data/plasma-rootfs.tar.gz
+    adb push `readlink -f $CACHEDIR/plasma-rootfs.tar.gz` /data/plasma-rootfs.tar.gz
     adb shell mkdir -p /data/lxc/containers/system/rootfs/
     adb shell tar xf /data/plasma-rootfs.tar.gz -C /data/lxc/containers/system/rootfs/
     adb shell rm /data/plasma-rootfs.tar.gz /data/lxc-android.tar.gz
-    adb push ~/.cache/plasmaphone/lxc-system-config /data/lxc/containers/system/config
+    adb push $CACHEDIR/lxc-system-config /data/lxc/containers/system/config
 
     # TODO: FIXME: should not be needed
     adb shell mkdir -p /data/lxc/containers/system/rootfs/sys/fs/cgroup/
@@ -95,5 +97,5 @@ fi
 flash-phone
 plasmafy
 
-echo "flashed cm version `cat ~/.cache/plasmaphone/cm_stamp`"
-echo "flashed plasma rootfs version `cat ~/.cache/plasmaphone/rootfs_stamp`"
+echo "flashed cm version `cat $CACHEDIR/cm_stamp`"
+echo "flashed plasma rootfs version `cat $CACHEDIR/rootfs_stamp`"
