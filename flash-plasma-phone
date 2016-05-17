@@ -25,7 +25,7 @@ function download {
     wget -c https://jenkins.linuxcontainers.org/job/lxc-build-android/lastSuccessfulBuild/artifact/lxc-android.tar.gz
     # rootfs for plasma mobile
     wget -c http://neon.plasma-mobile.org/rootfs/plasma-rootfs-`cat rootfs_stamp`.tar.gz
-    ln -s plasma-rootfs-`cat rootfs_stamp`.zip plasma-rootfs.tar.gz
+    ln -s plasma-rootfs-`cat rootfs_stamp`.tar.gz plasma-rootfs.tar.gz
     # config for lxc container
     wget -c https://raw.githubusercontent.com/plasma-phone-packaging/CM/master/lxc-system-config
 }
