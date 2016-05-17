@@ -11,8 +11,7 @@ function wait-for-device {
 }
 
 function download {
-    mkdir -p $CACHEDIR/ && cd $CACHEDIR/
-
+    mkdir -p $CACHEDIR/ && pushd $CACHEDIR/
     rm -f *
     # timestamp file for latest images
     wget -c http://neon.plasma-mobile.org/cm_stamp
@@ -30,6 +29,7 @@ function download {
     ln -s plasma-rootfs-`cat rootfs_stamp`.tar.gz plasma-rootfs.tar.gz
     # config for lxc container
     wget -c https://raw.githubusercontent.com/plasma-phone-packaging/CM/master/lxc-system-config
+    popd
 }
 
 function flash-phone {
