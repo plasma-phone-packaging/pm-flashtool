@@ -99,3 +99,4 @@ plasmafy
 
 echo "flashed cm version `cat $CACHEDIR/cm_stamp`"
 echo "flashed plasma rootfs version `cat $CACHEDIR/rootfs_stamp`"
+adb reboot
