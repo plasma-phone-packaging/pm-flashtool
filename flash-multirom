@@ -1,0 +1,71 @@
+#!/bin/bash
+set -ex
+
+CACHEDIR=cache
+
+function wait-for-device {
+    until adb shell true 2> /dev/null
+    do
+        sleep 1
+    done
+}
+
+function download {
+    mkdir -p $CACHEDIR/ && pushd $CACHEDIR/
+    rm -f *
+    # timestamp file for latest images
+    wget -c http://neon.plasma-mobile.org/cm_stamp
+    wget -c http://neon.plasma-mobile.org/rootfs_stamp
+
+    # lxc userspace tools
+    wget -c https://jenkins.linuxcontainers.org/job/lxc-build-android/lastSuccessfulBuild/artifact/lxc-android.tar.gz
+    # rootfs for plasma mobile
+    wget -c http://neon.plasma-mobile.org/rootfs/plasma-rootfs-`cat rootfs_stamp`.tar.gz
+    ln -s plasma-rootfs-`cat rootfs_stamp`.tar.gz plasma-rootfs.tar.gz
+    # config for lxc container
+    wget -c https://raw.githubusercontent.com/plasma-phone-packaging/CM/master/lxc-system-config
+    popd
+}
+
+function plasmafy {
+    adb root
+    sleep 5
+    adb wait-for-device
+
+    echo "Installing lxc userspace tools"
+    adb push $CACHEDIR/lxc-android.tar.gz /data/
+    adb shell tar xf /data/lxc-android.tar.gz
+
+    echo "Installing plasma rootfs"
+    adb push `readlink -f $CACHEDIR/plasma-rootfs.tar.gz` /data/plasma-rootfs.tar.gz
+    adb shell mkdir -p /data/lxc/containers/system/rootfs/
+    adb shell tar xf /data/plasma-rootfs.tar.gz -C /data/lxc/containers/system/rootfs/
+    adb shell rm /data/plasma-rootfs.tar.gz /data/lxc-android.tar.gz
+    adb push $CACHEDIR/lxc-system-config /data/lxc/containers/system/config
+
+    # TODO: FIXME: should not be needed
+    adb shell mkdir -p /data/lxc/containers/system/rootfs/sys/fs/cgroup/
+    echo "Done flashing"
+}
+
+while getopts ":c" opt; do
+  case $opt in
+    c)
+	  echo "Option provided to use cache, not downloading files again"
+	  NOCACHE=1
+      ;;
+    \?)
+      echo "Invalid option: -$OPTARG" >&2
+      exit 1
+      ;;
+  esac
+done
+
+if [ -z "$NOCACHE" ]; then
+	download
+    true
+fi
+plasmafy
+
+echo "flashed plasma rootfs version `cat $CACHEDIR/rootfs_stamp`"
+adb reboot
