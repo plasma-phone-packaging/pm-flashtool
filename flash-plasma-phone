@@ -23,7 +23,7 @@ function download {
     # twrp recovery
     wget -c http://neon.plasma-mobile.org/twrp-3.0.2-0-hammerhead.img
     # lxc userspace tools
-    wget -c https://jenkins.linuxcontainers.org/job/lxc-build-android/lastSuccessfulBuild/artifact/lxc-android.tar.gz
+    wget -c http://neon.plasma-mobile.org/lxc-android.tar.gz
     # rootfs for plasma mobile
     wget -c http://neon.plasma-mobile.org/rootfs/plasma-rootfs-`cat rootfs_stamp`.tar.gz
     ln -s plasma-rootfs-`cat rootfs_stamp`.tar.gz plasma-rootfs.tar.gz
