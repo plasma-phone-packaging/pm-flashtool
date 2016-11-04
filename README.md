@@ -48,3 +48,7 @@ lxc-start -n system -F
 ```
 
 to get login console and plasma started
+
+Multirom version
+----------------
+See instructions here : https://community.kde.org/Plasma/Mobile/CyanogenModBase#MultiROM_instructions_.28For_dualboot.29
