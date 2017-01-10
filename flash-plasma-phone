@@ -1,6 +1,13 @@
 #!/bin/bash
 set -ex
 
+# The job of flashtool is to,
+# - detect which device is connected
+# - download files for specific device
+# - install the recovery
+# - install the Plasma rootfs
+# - reboot
+
 CACHEDIR=cache
 
 function wait-for-device {
@@ -10,18 +17,41 @@ function wait-for-device {
     done
 }
 
-function download {
+function confirm() {
+# call with a prompt string or use a default
+    read -r -p "${1:-Are you sure? [y/N]} " response
+        case $response in
+        [yY][eE][sS]|[yY])
+        true
+            ;;
+    *)
+        false
+        ;;
+    esac
+}
+
+function download() {
+
+    # If no device name was supplied just bail out
+    if [ $# -eq 0 ]; then
+        echo "No device name was supplied to download, this is fatal error"
+        exit 1
+    fi
+
+    # Cleanup
     mkdir -p $CACHEDIR/ && pushd $CACHEDIR/
     rm -f *
-    # timestamp file for latest images
-    wget -c http://neon.plasma-mobile.org/cm_stamp
-    wget -c http://neon.plasma-mobile.org/rootfs_stamp
 
-    # stripped cm file
-    wget -c http://neon.plasma-mobile.org/cm/cm-`cat cm_stamp`.zip
-    ln -s cm-`cat cm_stamp`.zip cm-stripped.zip
-    # twrp recovery
-    wget -c http://neon.plasma-mobile.org/twrp-3.0.2-0-hammerhead.img
+    # timestamp file for latest images
+    wget -c http://neon.plasma-mobile.org/rootfs_stamp
+    wget -c http://neon.plasma-mobile.org/devices/$1/android_stamp -O $1_stamp
+
+    # TWRP recovery
+    wget -c http://neon.plasma-mobile.org/devices/$1/recovery.img -O $1_recovery.img
+    md5sum $1_recovery.img
+    confirm || exit 1
+    wget -c http://neon.plasma-mobile.org/devices/$1/`cat $1_stamp`.zip
+
     # lxc userspace tools
     wget -c http://neon.plasma-mobile.org/lxc-android.tar.gz
     # rootfs for plasma mobile
@@ -32,34 +62,38 @@ function download {
     popd
 }
 
-function flash-phone {
-    echo "Waiting for device to be in the fastboot mode"
-    fastboot getvar product
+function flash-phone() {
+
+    # If no device name was supplied just bail out
+    if [ $# -eq 0 ]; then
+        echo "No device name was supplied to flash, this is fatal error"
+        exit 1
+    fi
 
     echo "Flashing recovery"
     fastboot format cache
     fastboot format userdata
-    fastboot flash recovery $CACHEDIR/twrp-3.0.2-0-hammerhead.img
-    fastboot boot $CACHEDIR/twrp-3.0.2-0-hammerhead.img
+    fastboot flash recovery $CACHEDIR/$1_recovery.img
+    fastboot boot $CACHEDIR/$1_recovery.img
 
     wait-for-device
 
-    echo "Performing complete wipe first"
-    echo "--update_package=/cache/cm.zip" > $CACHEDIR/command
+    echo "Installing android base image"
+    echo "--update_package=/cache/update.zip" > $CACHEDIR/command
     adb push $CACHEDIR/command /cache/recovery/command
-    adb push `readlink -f $CACHEDIR/cm-stripped.zip` /cache/cm.zip
+    adb push $CACHEDIR/`cat $CACHEDIR/$1_stamp`.zip /cache/update.zip
 
     adb reboot recovery
     sleep 2
     adb wait-for-device
+    adb reboot recovery
 
-    echo "Done flashing cyanogenmod, now flashing rootfs and lxc"
+    echo "Done flashing android, now flashing rootfs and lxc"
 }
 
 function plasmafy {
-    adb root
-    sleep 5
-    adb wait-for-device
+
+    wait-for-device
 
     echo "Installing lxc userspace tools"
     adb push $CACHEDIR/lxc-android.tar.gz /data/
@@ -74,8 +108,19 @@ function plasmafy {
 
     # TODO: FIXME: should not be needed
     adb shell mkdir -p /data/lxc/containers/system/rootfs/sys/fs/cgroup/
-    echo "Done flashing"
+    echo "Done flashing, now rebooting into system"
+    adb reboot
 }
+
+
+
+echo "Waiting for device to be in the fastboot mode"
+fastboot getvar product
+
+DEVICE_NAME=`fastboot getvar product 2>&1 | head -1 | awk -F': ' '{print $2}'`
+confirm "Connected device is $DEVICE_NAME, is that correct? [y/N]" || exit 1
+
+echo "Continuing ..."
 
 while getopts ":c" opt; do
   case $opt in
@@ -91,12 +136,8 @@ while getopts ":c" opt; do
 done
 
 if [ -z "$NOCACHE" ]; then
-	download
+	download $DEVICE_NAME
     true
 fi
-flash-phone
+flash-phone $DEVICE_NAME
 plasmafy
-
-echo "flashed cm version `cat $CACHEDIR/cm_stamp`"
-echo "flashed plasma rootfs version `cat $CACHEDIR/rootfs_stamp`"
-adb reboot
