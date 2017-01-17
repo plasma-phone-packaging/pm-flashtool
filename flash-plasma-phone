@@ -79,9 +79,10 @@ function flash-phone() {
     wait-for-device
 
     echo "Installing android base image"
-    echo "--update_package=/cache/update.zip" > $CACHEDIR/command
+    echo "--update_package=/sdcard/update.zip" > $CACHEDIR/command
     adb push $CACHEDIR/command /cache/recovery/command
-    adb push $CACHEDIR/`cat $CACHEDIR/$1_stamp`.zip /cache/update.zip
+    sleep 2
+    adb push $CACHEDIR/`cat $CACHEDIR/$1_stamp`.zip /sdcard/update.zip
 
     adb reboot recovery
     sleep 2
