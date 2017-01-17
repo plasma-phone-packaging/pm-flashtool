@@ -87,7 +87,8 @@ function flash-phone() {
     adb reboot recovery
     sleep 2
     adb wait-for-device
-    adb reboot recovery
+    adb reboot bootloader
+    fastboot boot $CACHEDIR/$1_recovery.img
 
     echo "Done flashing android, now flashing rootfs and lxc"
 }
