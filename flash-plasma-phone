@@ -55,8 +55,8 @@ function download() {
     # lxc userspace tools
     wget -c http://neon.plasma-mobile.org/lxc-android.tar.gz
     # rootfs for plasma mobile
-    wget -c http://neon.plasma-mobile.org/rootfs/plasma-rootfs-`cat rootfs_stamp`.tar.gz
-    ln -s plasma-rootfs-`cat rootfs_stamp`.tar.gz plasma-rootfs.tar.gz
+    wget -c http://neon.plasma-mobile.org/rootfs/pm-rootfs-`cat rootfs_stamp`.tar.gz
+    ln -s pm-rootfs-`cat rootfs_stamp`.tar.gz pm-rootfs.tar.gz
     # config for lxc container
     wget -c https://raw.githubusercontent.com/plasma-phone-packaging/CM/master/lxc-system-config
     popd
@@ -100,10 +100,10 @@ function plasmafy {
     adb shell tar xf /data/lxc-android.tar.gz
 
     echo "Installing plasma rootfs"
-    adb push `readlink -f $CACHEDIR/plasma-rootfs.tar.gz` /data/plasma-rootfs.tar.gz
+    adb push `readlink -f $CACHEDIR/pm-rootfs.tar.gz` /data/pm-rootfs.tar.gz
     adb shell mkdir -p /data/lxc/containers/system/rootfs/
-    adb shell tar xf /data/plasma-rootfs.tar.gz -C /data/lxc/containers/system/rootfs/
-    adb shell rm /data/plasma-rootfs.tar.gz /data/lxc-android.tar.gz
+    adb shell tar xf /data/pm-rootfs.tar.gz -C /data/lxc/containers/system/rootfs/
+    adb shell rm /data/pm-rootfs.tar.gz /data/lxc-android.tar.gz
     adb push $CACHEDIR/lxc-system-config /data/lxc/containers/system/config
 
     # TODO: FIXME: should not be needed
