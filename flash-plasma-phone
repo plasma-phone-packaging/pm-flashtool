@@ -49,7 +49,6 @@ function download() {
     # TWRP recovery
     wget -c http://neon.plasma-mobile.org/devices/$1/recovery.img -O $1_recovery.img
     md5sum $1_recovery.img
-    confirm || exit 1
     wget -c http://neon.plasma-mobile.org/devices/$1/`cat $1_stamp`.zip
 
     # lxc userspace tools
