@@ -76,7 +76,9 @@ function flash-phone() {
     fastboot format userdata
     fastboot flash recovery $CACHEDIR/$1_recovery.img
     fastboot boot $CACHEDIR/$1_recovery.img
+    wait-for-device
 
+    adb reboot recovery
     wait-for-device
 
     echo "Installing android base image"
