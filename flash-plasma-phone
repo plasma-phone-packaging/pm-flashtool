@@ -47,7 +47,7 @@ function download() {
     wget -c http://neon.plasma-mobile.org/devices/$1/android_stamp -O $1_stamp
 
     # TWRP recovery
-    wget -c http://neon.plasma-mobile.org/devices/$1/$1_recovery.img
+    wget -c http://neon.plasma-mobile.org/devices/$1/recovery.img -O $1_recovery.img
     md5sum $1_recovery.img
     confirm || exit 1
     wget -c http://neon.plasma-mobile.org/devices/$1/`cat $1_stamp`.zip
@@ -86,9 +86,7 @@ function flash-phone() {
 
     adb reboot recovery
     sleep 2
-    
-    wait-for-device
-    
+    adb wait-for-device
     adb reboot bootloader
     fastboot boot $CACHEDIR/$1_recovery.img
 
