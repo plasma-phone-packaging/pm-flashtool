@@ -57,6 +57,8 @@ function download() {
     # rootfs for plasma mobile
     wget -c http://neon.plasma-mobile.org/rootfs/pm-rootfs-`cat rootfs_stamp`.tar.gz
     ln -s pm-rootfs-`cat rootfs_stamp`.tar.gz pm-rootfs.tar.gz
+    # udev rules specific to device
+    wget -c http://neon.plasma-mobile.org/devices/$1/55-$1.rules
     # config for lxc container
     wget -c https://raw.githubusercontent.com/plasma-phone-packaging/CM/master/lxc-system-config
     popd
@@ -107,6 +109,7 @@ function plasmafy {
     adb shell tar xf /data/pm-rootfs.tar.gz -C /data/lxc/containers/system/rootfs/
     adb shell rm /data/pm-rootfs.tar.gz /data/lxc-android.tar.gz
     adb push $CACHEDIR/lxc-system-config /data/lxc/containers/system/config
+    adb push $CACHEDIR/55-$1.rules /data/lxc/containers/system/rootfs/etc/udev/rules.d/
 
     # TODO: FIXME: should not be needed
     adb shell mkdir -p /data/lxc/containers/system/rootfs/sys/fs/cgroup/
@@ -142,4 +145,4 @@ if [ -z "$NOCACHE" ]; then
     true
 fi
 flash-phone $DEVICE_NAME
-plasmafy
+plasmafy $DEVICE_NAME
