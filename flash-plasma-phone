@@ -87,6 +87,11 @@ function flash-phone() {
     sleep 2
     adb push $CACHEDIR/`cat $CACHEDIR/$1_stamp`.zip /sdcard/update.zip
 
+    echo "For debugging purpose"
+    adb shell mount
+    adb shell cat /cache/recovery/command
+    adb shell ls /sdcard
+
     adb reboot recovery
     sleep 2
     adb wait-for-device
