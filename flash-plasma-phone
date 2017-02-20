@@ -48,7 +48,6 @@ function download() {
 
     # TWRP recovery
     wget -c http://neon.plasma-mobile.org/devices/$1/recovery.img -O $1_recovery.img
-    md5sum $1_recovery.img
     wget -c http://neon.plasma-mobile.org/devices/$1/`cat $1_stamp`.zip
 
     # lxc userspace tools
@@ -83,9 +82,10 @@ function flash-phone() {
 
     echo "Installing android base image"
     echo "--update_package=/sdcard/update.zip" > $CACHEDIR/command
-    adb push $CACHEDIR/command /cache/recovery/command
     sleep 2
     adb push $CACHEDIR/`cat $CACHEDIR/$1_stamp`.zip /sdcard/update.zip
+    sleep 2
+    adb push $CACHEDIR/command /cache/recovery/command
 
     echo "For debugging purpose"
     adb shell mount
