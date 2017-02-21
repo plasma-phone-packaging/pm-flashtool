@@ -73,6 +73,8 @@ function flash-phone() {
     echo "Flashing recovery"
     fastboot format cache
     fastboot format userdata
+    fastboot format recovery
+    fastboot format system
     fastboot flash recovery $CACHEDIR/$1_recovery.img
     fastboot boot $CACHEDIR/$1_recovery.img
     wait-for-device
