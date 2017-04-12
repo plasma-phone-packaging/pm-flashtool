@@ -31,7 +31,6 @@ function confirm() {
 }
 
 function download() {
-
     # If no device name was supplied just bail out
     if [ $# -eq 0 ]; then
         echo "No device name was supplied to download, this is fatal error"
@@ -43,7 +42,12 @@ function download() {
     rm -f *
 
     # timestamp file for latest images
-    wget -c http://neon.plasma-mobile.org/rootfs_stamp
+    if [ "$2" == "neon" ]; then
+        wget -c http://neon.plasma-mobile.org/rootfs_stamp
+    fi
+    if [ "$2" == "arch" ]; then
+        wget -c http://neon.plasma-mobile.org/arch_rootfs_stamp
+    fi
     wget -c http://neon.plasma-mobile.org/devices/$1/android_stamp -O $1_stamp
 
     # TWRP recovery
@@ -52,9 +56,17 @@ function download() {
 
     # lxc userspace tools
     wget -c http://neon.plasma-mobile.org/lxc-android.tar.gz
-    # rootfs for plasma mobile
-    wget -c http://neon.plasma-mobile.org/rootfs/pm-rootfs-`cat rootfs_stamp`.tar.gz
-    ln -s pm-rootfs-`cat rootfs_stamp`.tar.gz pm-rootfs.tar.gz
+    if [ "$2" == "neon" ]; then
+        # rootfs for plasma mobile
+        wget -c http://neon.plasma-mobile.org/rootfs/pm-rootfs-`cat rootfs_stamp`.tar.gz
+        ln -s pm-rootfs-`cat rootfs_stamp`.tar.gz pm-rootfs.tar.gz
+    fi
+    if [ "$2" == "arch" ]; then
+        # rootfs for plasma mobile
+        wget -c http://neon.plasma-mobile.org/rootfs/arch/pm-arch-rootfs-`cat arch_rootfs_stamp`.tar.gz
+        ln -s pm-arch-rootfs-`cat rootfs_stamp`.tar.gz pm-rootfs.tar.gz
+    fi
+
     # udev rules specific to device
     wget -c http://neon.plasma-mobile.org/devices/$1/55-$1.rules
     # config for lxc container
@@ -133,13 +145,18 @@ fastboot getvar product
 DEVICE_NAME=`fastboot getvar product 2>&1 | head -1 | awk -F': ' '{print $2}'`
 confirm "Connected device is $DEVICE_NAME, is that correct? [y/N]" || exit 1
 
+FLAVOR="neon"
+
 echo "Continuing ..."
 
-while getopts ":c" opt; do
+while getopts "cf:" opt; do
   case $opt in
     c)
 	  echo "Option provided to use cache, not downloading files again"
 	  NOCACHE=1
+      ;;
+    f)
+      FLAVOR="$OPTARG"
       ;;
     \?)
       echo "Invalid option: -$OPTARG" >&2
@@ -149,7 +166,7 @@ while getopts ":c" opt; do
 done
 
 if [ -z "$NOCACHE" ]; then
-	download $DEVICE_NAME
+	download $DEVICE_NAME $FLAVOR
     true
 fi
 flash-phone $DEVICE_NAME
