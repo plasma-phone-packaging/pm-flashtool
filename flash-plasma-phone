@@ -64,7 +64,7 @@ function download() {
     if [ "$2" == "arch" ]; then
         # rootfs for plasma mobile
         wget -c http://neon.plasma-mobile.org/rootfs/arch/pm-arch-rootfs-`cat arch_rootfs_stamp`.tar.gz
-        ln -s pm-arch-rootfs-`cat rootfs_stamp`.tar.gz pm-rootfs.tar.gz
+        ln -s pm-arch-rootfs-`cat arch_rootfs_stamp`.tar.gz pm-rootfs.tar.gz
     fi
 
     # udev rules specific to device
