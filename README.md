@@ -24,13 +24,13 @@ To run..
 ```
 git clone https://github.com/plasma-phone-packaging/pm-flashtool.git
 cd pm-flashtool
-./flash-plasma-phone
+./pm-flash
 ```
 
-Without options flash-plasma-phone script downloads all files again, pass '-c' to let it use cache instead
+Without options pm-flash script downloads all files again, pass '-c' to let it use cache instead
 
 ```
-./flash-plasma-phone -c
+./pm-flash -c
 ```
 
 This
