@@ -20,8 +20,8 @@ function download {
     # lxc userspace tools
     wget -c http://neon.plasma-mobile.org/lxc-android.tar.gz
     # rootfs for plasma mobile
-    wget -c http://neon.plasma-mobile.org/rootfs/plasma-rootfs-`cat rootfs_stamp`.tar.gz
-    ln -s plasma-rootfs-`cat rootfs_stamp`.tar.gz plasma-rootfs.tar.gz
+    wget -c http://neon.plasma-mobile.org/rootfs/pm-rootfs-`cat rootfs_stamp`.tar.gz
+    ln -s pm-rootfs-`cat rootfs_stamp`.tar.gz plasma-rootfs.tar.gz
     # config for lxc container
     wget -c https://raw.githubusercontent.com/plasma-phone-packaging/CM/master/lxc-system-config
     popd
@@ -69,3 +69,4 @@ plasmafy
 
 echo "flashed plasma rootfs version `cat $CACHEDIR/rootfs_stamp`"
 adb reboot
+
