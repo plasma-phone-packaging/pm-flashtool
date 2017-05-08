@@ -1,0 +1,52 @@
+#!/bin/bash
+set -ex
+
+CACHEDIR=cache
+
+function confirm() {
+# call with a prompt string or use a default
+    read -r -p "${1:-Are you sure? [y/N]} " response
+        case $response in
+        [yY][eE][sS]|[yY])
+        true
+            ;;
+    *)
+        false
+        ;;
+    esac
+}
+
+echo "Waiting for device to be in the fastboot mode"
+fastboot getvar product
+
+DEVICE_NAME=`fastboot getvar product 2>&1 | head -1 | awk -F': ' '{print $2}'`
+confirm "Connected device is $DEVICE_NAME, is that correct? [y/N]" || exit 1
+
+while getopts "c" opt; do
+  case $opt in
+    c)
+	  echo "Option provided to use cache, not downloading files again"
+	  NOCACHE=1
+      ;;
+    \?)
+      echo "Invalid option: -$OPTARG" >&2
+      exit 1
+      ;;
+  esac
+done
+
+if [ "$DEVICE_NAME" == "bullhead" ]; then
+    cd $CACHEDIR
+    if [ -z "$NOCACHE" ]; then
+        mkdir -p vendor-$DEVICE_NAME
+        pushd vendor-$DEVICE_NAME
+        rm -f *
+        wget https://dl.google.com/dl/android/aosp/bullhead-mtc20k-factory-4a950470.zip
+        unzip bullhead-mtc20k-factory-4a950470.zip
+        unzip bullhead-mtc20k/image-bullhead-mtc20k.zip
+        popd
+        cp vendor-$DEVICE_NAME/vendor.img vendor-$DEVICE_NAME.img
+        rm -r vendor-$DEVICE_NAME
+    fi
+    fastboot flash vendor vendor-$DEVICE_NAME.img
+fi
