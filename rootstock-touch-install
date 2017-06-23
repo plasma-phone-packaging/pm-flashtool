@@ -1,0 +1,181 @@
+#!/bin/sh
+#
+#  Copyright (c) 2014 Canonical
+#
+#  Author: Oliver Grawert <ogra@canonical.com>
+#
+#  This program is free software; you can redistribute it and/or
+#  modify it under the terms of the GNU General Public License as
+#  published by the Free Software Foundation; either version 2 of the
+#  License, or (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with this program; if not, write to the Free Software
+#  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+#  USA
+#
+
+set -e
+
+TARPATH=$1
+SYSIMG=$2
+BOOTIMG=$3
+
+check_prereq()
+{
+	if [ ! -x $(which adb) ]; then
+		echo "please install the android-tools-adb packages" && exit 1
+	fi
+}
+
+do_shell()
+{
+	adb shell "$@"
+}
+
+convert_android_img()
+{
+	if file $SYSIMG | grep -v ": Linux rev 1.0 ext4" >/dev/null; then
+		simg2img $SYSIMG $WORKDIR/system.img.raw
+		mkdir $TMPMOUNT
+		mount -t ext4 -o loop $WORKDIR/system.img.raw $TMPMOUNT
+		make_ext4fs -l 120M $WORKDIR/system.img $TMPMOUNT >/dev/null 2>&1
+		SYSIMAGE=$WORKDIR/system.img
+	else
+		SYSIMAGE=$SYSIMG
+	fi
+}
+
+check_mounts(){
+	MOUNTS=$(do_shell "cat /proc/mounts")
+	if ! grep -qs '/cache' $MOUNTS; then
+		do_shell "mount /cache"
+	fi
+	if ! grep -qs '/data' $MOUNTS; then
+		do_shell "mount /data"
+	fi
+}
+
+
+prepare_ubuntu_system()
+{
+	do_shell "rm -f /data/rootfs.img"
+	do_shell "dd if=/dev/zero of=/data/rootfs.img seek=500K bs=4096 count=0 >/dev/null 2>&1"
+	do_shell "mkfs.ext2 -F /data/rootfs.img >/dev/null 2>&1"
+	do_shell "mkdir -p /cache/system"
+	do_shell "mount -o loop /data/rootfs.img /cache/system/"
+}
+
+cleanup()
+{
+	mount | grep -q $TMPMOUNT 2>/dev/null && umount $TMPMOUNT
+	cleanup_device
+	rm -rf $WORKDIR
+	echo
+}
+
+cleanup_device()
+{
+	[ -e $WORKDIR/device-clean ] && return
+	do_shell "umount /cache/system/ 2>/dev/null && rm -rf /cache/system 2>/dev/null"
+	do_shell "rm -f /recovery/$TARBALL"
+	[ -e $WORKDIR ] && touch $WORKDIR/device-clean 2>/dev/null || true
+}
+
+trap cleanup 0 1 2 3 9 15
+
+usage()
+{
+	echo "usage: $(basename $0) <path to rootfs tarball> <path to android system.img> [options]\n
+	options:
+	-h|--help		this message"
+	exit 1
+}
+
+SUDOARGS="$@"
+
+while [ $# -gt 0 ]; do
+	case "$1" in
+		-h|--help)
+			usage
+			;;
+	esac
+	shift
+done
+
+TARBALL=$(basename $TARPATH)
+
+if [ -z "$TARBALL" ]; then
+    echo "need valid rootfs tarball path"
+    usage
+fi
+
+TARTYPE=$(file --mime-type $TARPATH|sed 's/^.* //')
+case ${TARTYPE#application\/} in
+    gzip|x-gzip)
+	;;
+    *)
+	echo "Need valid rootfs tarball gzip type"
+	usage
+	;;
+esac
+
+if [ -z "$SYSIMG" ] || \
+	[ "$(file --mime-type $SYSIMG|sed 's/^.* //')" != "application/octet-stream" ]; then
+	echo "need valid system.img path and type application/octet-stream"
+	usage
+fi
+
+if [ -z "$BOOTIMG" ]; then
+    echo "need valid boot.img path as 3rd argument"
+    usage
+fi
+
+[ $(id -u) -ne 0 ] && exec sudo $0 $SUDOARGS
+
+check_prereq
+
+if ! adb devices | grep -q recovery; then
+	echo "please make sure the device is attched via USB in recovery mode"
+	exit 1
+fi
+
+check_mounts
+
+WORKDIR=$(mktemp -d /tmp/rootstock-touch-install.XXXXX)
+TMPMOUNT="$WORKDIR/tmpmount"
+
+echo -n "transfering rootfs tarball ... "
+adb push $TARPATH /recovery/ >/dev/null 2>&1
+echo "[done]"
+
+echo -n "preparing system-image on device ... "
+prepare_ubuntu_system
+echo "[done]"
+
+echo -n "unpacking rootfs tarball to system-image ... "
+do_shell "cd /cache/system && zcat /recovery/$TARBALL | tar xf -"
+do_shell "[ -e /cache/system/SWAP.swap ] && mv /cache/system/SWAP.swap /data/SWAP.img"
+echo "[done]"
+
+echo -n "adding android system image to installation ... "
+convert_android_img
+ANDROID_DIR="/data"
+adb push $SYSIMAGE $ANDROID_DIR >/dev/null 2>&1
+echo "[done]"
+
+echo -n "cleaning up on device ... "
+cleanup_device
+echo "[done]"
+
+echo -n "rebooting into bootloader mode and flashing boot.img ... "
+adb reboot bootloader
+fastboot getvar product 2> /dev/null
+fastboot flash boot $BOOTIMG 2> /dev/null
+fastboot continue 2> /dev/bull
+echo "[done]"

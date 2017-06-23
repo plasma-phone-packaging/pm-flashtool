@@ -10,14 +10,9 @@ set -ex
 
 CACHEDIR=cache
 
-function wait-for-device {
-    until adb shell true 2> /dev/null
-    do
-        sleep 1
-    done
-}
 
-function confirm() {
+confirm()
+{
 # call with a prompt string or use a default
     read -r -p "${1:-Are you sure? [y/N]} " response
         case $response in
@@ -30,7 +25,8 @@ function confirm() {
     esac
 }
 
-function download() {
+download()
+{
     # If no device name was supplied just bail out
     if [ $# -eq 0 ]; then
         echo "No device name was supplied to download, this is fatal error"
@@ -39,105 +35,41 @@ function download() {
 
     # Cleanup
     mkdir -p $CACHEDIR/ && pushd $CACHEDIR/
-    rm -f *
 
-    # timestamp file for latest images
-    if [ "$2" == "neon" ]; then
-        wget -c http://neon.plasma-mobile.org/rootfs_stamp
-    fi
-    if [ "$2" == "arch" ]; then
-        wget -c http://neon.plasma-mobile.org/arch_rootfs_stamp
-    fi
-    wget -c http://neon.plasma-mobile.org/devices/$1/android_stamp -O $1_stamp
+    echo "Downloading latest rootfs ... "
+    ROOTFS_VERSION=`curl http://images.plasma-mobile.org/rootfs_stamp 2> /dev/null`
+    wget -c "http://images.plasma-mobile.org/rootfs/pm-rootfs-$ROOTFS_VERSION.tar.gz" -P rootfs
+    ln -s rootfs/pm-rootfs-$ROOTFS_VERSION.tar.gz pm-rootfs-latest.tar.gz
+    echo "[done]"
 
-    # TWRP recovery
-    wget -c http://neon.plasma-mobile.org/devices/$1/recovery.img -O $1_recovery.img
-    wget -c http://neon.plasma-mobile.org/devices/$1/`cat $1_stamp`.zip
+    # This will change in future
+    echo "Downloading the latest boot, recovery, and system images  ... "
+    HALIUM_VERSION=`curl http://images.plasma-mobile.org/halium/$1/halium_stamp 2> /dev/null`
+    wget -c "http://images.plasma-mobile.org/halium/$1/recovery.img" -P $1
+    wget -c "http://images.plasma-mobile.org/halium/$1/$HALIUM_VERSION/system.img" -P $1/$HALIUM_VERSION
+    wget -c "http://images.plasma-mobile.org/halium/$1/$HALIUM_VERSION/boot.img" -P $1/$HALIUM_VERSION
+    ln -s $HALIUM_VERSION $1/latest
+    echo "[done]"
 
-    # lxc userspace tools
-    wget -c http://neon.plasma-mobile.org/lxc-android.tar.gz
-    if [ "$2" == "neon" ]; then
-        # rootfs for plasma mobile
-        wget -c http://neon.plasma-mobile.org/rootfs/pm-rootfs-`cat rootfs_stamp`.tar.gz
-        ln -s pm-rootfs-`cat rootfs_stamp`.tar.gz pm-rootfs.tar.gz
-    fi
-    if [ "$2" == "arch" ]; then
-        # rootfs for plasma mobile
-        wget -c http://neon.plasma-mobile.org/rootfs/arch/pm-arch-rootfs-`cat arch_rootfs_stamp`.tar.gz
-        ln -s pm-arch-rootfs-`cat arch_rootfs_stamp`.tar.gz pm-rootfs.tar.gz
-    fi
-
-    # udev rules specific to device
-    wget -c http://neon.plasma-mobile.org/devices/$1/55-$1.rules
-    # config for lxc container
-    wget -c https://raw.githubusercontent.com/plasma-phone-packaging/CM/master/lxc-system-config
     popd
 }
 
-function flash-phone() {
-
+flash-phone()
+{
     # If no device name was supplied just bail out
     if [ $# -eq 0 ]; then
-        echo "No device name was supplied to flash, this is fatal error"
+        echo "No device name was supplied to flash-phone, this is fatal error"
         exit 1
     fi
 
-    echo "Flashing recovery"
-    fastboot format cache
-    fastboot format userdata
-    fastboot format recovery
-    fastboot format system
-    fastboot flash recovery $CACHEDIR/$1_recovery.img
-    fastboot boot $CACHEDIR/$1_recovery.img
-    wait-for-device
+    echo -n "Flashing recovery image ... "
+    fastboot flash recovery $CACHEDIR/$1/recovery.img 2> /dev/null
+    echo -n "[done]"
 
-    adb reboot recovery
-    wait-for-device
-
-    echo "Installing android base image"
-    echo "--update_package=/sdcard/update.zip" > $CACHEDIR/command
-    sleep 2
-    adb push $CACHEDIR/`cat $CACHEDIR/$1_stamp`.zip /sdcard/update.zip
-    sleep 2
-    adb push $CACHEDIR/command /cache/recovery/command
-
-    echo "For debugging purpose"
-    adb shell mount
-    adb shell cat /cache/recovery/command
-    adb shell ls /sdcard
-
-    adb reboot recovery
-    sleep 2
-    adb wait-for-device
-    adb reboot bootloader
-    fastboot boot $CACHEDIR/$1_recovery.img
-
-    echo "Done flashing android, now flashing rootfs and lxc"
+    fastboot boot $CACHEDIR/$1/recovery.img
+    adb wait-for-recovery
+    ./rootstock-touch-install `readlink -f $CACHEDIR/pm-rootfs-latest.tar.gz` $CACHEDIR/$1/latest/system.img $CACHEDIR/$1/latest/boot.img
 }
-
-function plasmafy {
-
-    wait-for-device
-
-    echo "Installing lxc userspace tools"
-    adb push $CACHEDIR/lxc-android.tar.gz /data/
-    adb shell tar xf /data/lxc-android.tar.gz
-
-    echo "Installing plasma rootfs"
-    adb push `readlink -f $CACHEDIR/pm-rootfs.tar.gz` /data/pm-rootfs.tar.gz
-    adb shell mkdir -p /data/lxc/containers/system/rootfs/
-    adb shell tar xf /data/pm-rootfs.tar.gz -C /data/lxc/containers/system/rootfs/
-    adb shell rm /data/pm-rootfs.tar.gz /data/lxc-android.tar.gz
-    adb push $CACHEDIR/lxc-system-config /data/lxc/containers/system/config
-    adb push $CACHEDIR/55-$1.rules /data/lxc/containers/system/rootfs/etc/udev/rules.d/
-
-    # TODO: FIXME: should not be needed
-    adb shell mkdir -p /data/lxc/containers/system/rootfs/sys/fs/cgroup/
-    echo "Done flashing, now rebooting into system"
-    adb reboot
-}
-
-
 
 echo "Waiting for device to be in the fastboot mode"
 fastboot getvar product
@@ -145,18 +77,13 @@ fastboot getvar product
 DEVICE_NAME=`fastboot getvar product 2>&1 | head -1 | awk -F': ' '{print $2}'`
 confirm "Connected device is $DEVICE_NAME, is that correct? [y/N]" || exit 1
 
-PLATFORM="neon"
-
 echo "Continuing ..."
 
-while getopts "cp:" opt; do
+while getopts "c" opt; do
   case $opt in
     c)
 	  echo "Option provided to use cache, not downloading files again"
 	  NOCACHE=1
-      ;;
-    p)
-      PLATFORM="$OPTARG"
       ;;
     \?)
       echo "Invalid option: -$OPTARG" >&2
@@ -167,7 +94,6 @@ done
 
 if [ -z "$NOCACHE" ]; then
 	download $DEVICE_NAME $PLATFORM
-    true
 fi
+
 flash-phone $DEVICE_NAME
-plasmafy $DEVICE_NAME
