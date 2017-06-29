@@ -10,6 +10,15 @@ set -ex
 
 CACHEDIR=cache
 
+#wait until we get a working adb shell, meaning the device is in normal or recovery mode
+wait_for_device() {
+    while test -z "$(adb shell echo '1' 2>/dev/null)"
+    do
+        echo -n ".";
+        sleep 3;
+    done
+    echo
+}
 
 confirm()
 {
@@ -67,7 +76,7 @@ flash-phone()
     echo -n "[done]"
 
     fastboot boot $CACHEDIR/$1/recovery.img
-    adb wait-for-recovery
+    wait_for_device
     ./rootstock-touch-install `readlink -f $CACHEDIR/pm-rootfs-latest.tar.gz` $CACHEDIR/$1/latest/system.img $CACHEDIR/$1/latest/boot.img
 }
 
