@@ -140,11 +140,6 @@ fi
 
 check_prereq
 
-if ! adb devices | grep -q recovery; then
-	echo "please make sure the device is attched via USB in recovery mode"
-	exit 1
-fi
-
 check_mounts
 
 WORKDIR=$(mktemp -d /tmp/rootstock-touch-install.XXXXX)
