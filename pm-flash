@@ -106,16 +106,18 @@ function flash-phone() {
     adb shell cat /cache/recovery/command
     adb shell ls /sdcard
 
+    # TODO: FIXME: On Nexus 5X devices, the phone will attempt to boot
+    # (CONT'D) into the OS.
     adb reboot recovery
-    sleep 2
-    adb wait-for-device
+    sleep 10
+    wait-for-device
     adb reboot bootloader
     fastboot boot $CACHEDIR/$1_recovery.img
 
     echo "Done flashing android, now flashing rootfs and lxc"
 }
 
-function plasmafy {
+function plasmafy(){
 
     wait-for-device
 
