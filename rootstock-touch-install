@@ -136,7 +136,7 @@ if [ -z "$BOOTIMG" ]; then
     usage
 fi
 
-[ $(id -u) -ne 0 ] && exec sudo $0 $SUDOARGS
+[ $(id -u) -ne 0 ] && ! grep -q -e ' adb ' -e ' adbusers ' <(groups) && exec sudo $0 $SUDOARGS
 
 check_prereq
 
