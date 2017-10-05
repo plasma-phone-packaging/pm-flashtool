@@ -46,9 +46,16 @@ download()
     mkdir -p $CACHEDIR/ && pushd $CACHEDIR/
 
     echo "Downloading latest rootfs ... "
-    ROOTFS_VERSION=`curl http://images.plasma-mobile.org/rootfs_stamp 2> /dev/null`
-    wget -c "http://images.plasma-mobile.org/rootfs/pm-rootfs-$ROOTFS_VERSION.tar.gz" -P rootfs
-    ln -s rootfs/pm-rootfs-$ROOTFS_VERSION.tar.gz pm-rootfs-latest.tar.gz
+    if [ "$2" == "neon" ]; then
+        ROOTFS_VERSION=`curl http://images.plasma-mobile.org/rootfs_stamp 2> /dev/null`
+        wget -c "http://images.plasma-mobile.org/rootfs/pm-rootfs-$ROOTFS_VERSION.tar.gz" -P rootfs
+        ln -sf rootfs/pm-rootfs-$ROOTFS_VERSION.tar.gz pm-rootfs-latest.tar.gz
+    fi
+    if [ "$2" == "arch" ]; then
+        ROOTFS_VERSION=`curl http://images.plasma-mobile.org/arch_rootfs_stamp 2> /dev/null`
+        wget -c "http://images.plasma-mobile.org/arch-rootfs/pm-rootfs-$ROOTFS_VERSION.tar.gz" -P rootfs
+        ln -sf rootfs/pm-rootfs-$ROOTFS_VERSION.tar.gz pm-rootfs-latest.tar.gz
+    fi
     echo "[done]"
 
     # This will change in future
@@ -57,7 +64,7 @@ download()
     wget -c "http://images.plasma-mobile.org/halium/$1/recovery.img" -P $1
     wget -c "http://images.plasma-mobile.org/halium/$1/$HALIUM_VERSION/system.img" -P $1/$HALIUM_VERSION
     wget -c "http://images.plasma-mobile.org/halium/$1/$HALIUM_VERSION/boot.img" -P $1/$HALIUM_VERSION
-    ln -s $HALIUM_VERSION $1/latest
+    ln -sf $HALIUM_VERSION $1/latest
     echo "[done]"
 
     popd
@@ -86,13 +93,18 @@ fastboot getvar product
 DEVICE_NAME=`fastboot getvar product 2>&1 | head -1 | awk -F': ' '{print $2}'`
 confirm "Connected device is $DEVICE_NAME, is that correct? [y/N]" || exit 1
 
+PLATFORM="neon"
+
 echo "Continuing ..."
 
-while getopts "c" opt; do
+while getopts "cp:" opt; do
   case $opt in
     c)
 	  echo "Option provided to use cache, not downloading files again"
 	  NOCACHE=1
+      ;;
+    p)
+      PLATFORM="$OPTARG"
       ;;
     \?)
       echo "Invalid option: -$OPTARG" >&2
