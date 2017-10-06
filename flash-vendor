@@ -41,6 +41,6 @@ if [ "$DEVICE_NAME" == "bullhead" ]; then
     if [ -z "$NOCACHE" ]; then
         wget http://arm.bshah.in/bullhead-vendor.img
     fi
-    fastboot flash vendor vendor-$DEVICE_NAME.img
+    fastboot flash vendor $DEVICE_NAME-vendor.img
     fastboot continue
 fi
