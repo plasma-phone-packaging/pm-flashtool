@@ -39,16 +39,7 @@ if [ "$DEVICE_NAME" == "bullhead" ]; then
     mkdir -p $CACHEDIR
     cd $CACHEDIR
     if [ -z "$NOCACHE" ]; then
-        mkdir -p vendor-$DEVICE_NAME
-        pushd vendor-$DEVICE_NAME
-        rm -f *
-        wget https://dl.google.com/dl/android/aosp/bullhead-mtc20k-factory-4a950470.zip
-        unzip bullhead-mtc20k-factory-4a950470.zip
-        rm bullhead-mtc20k-factory-4a950470.zip
-        unzip bullhead-mtc20k/image-bullhead-mtc20k.zip vendor.img
-        popd
-        cp vendor-$DEVICE_NAME/vendor.img vendor-$DEVICE_NAME.img
-        rm -r vendor-$DEVICE_NAME
+        wget http://arm.bshah.in/bullhead-vendor.img
     fi
     fastboot flash vendor vendor-$DEVICE_NAME.img
     fastboot continue
