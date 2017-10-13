@@ -66,7 +66,7 @@ prepare_ubuntu_system()
 {
 	do_shell "rm -f /data/rootfs.img"
 	do_shell "dd if=/dev/zero of=/data/rootfs.img seek=500K bs=8192 count=0 >/dev/null 2>&1"
-	do_shell "mkfs.ext2 -F /data/rootfs.img >/dev/null 2>&1"
+	do_shell "(mkfs.ext2 -F /data/rootfs.img  || mke2fs -F /data/rootfs.img) >/dev/null 2>&1"
 	do_shell "mkdir -p /cache/system"
 	do_shell "mount -o loop /data/rootfs.img /cache/system/"
 }
