@@ -51,6 +51,11 @@ convert_android_img()
 	fi
 }
 
+send_busybox() {
+	adb push "$BUSYBOX_PUSH" "/data/"
+	BUSYBOX="/data/`basename $BUSYBOX_PUSH`"
+}
+
 check_mounts(){
 	MOUNTS=$(do_shell "cat /proc/mounts")
 	if ! grep -qs '/cache' $MOUNTS; then
@@ -84,6 +89,10 @@ cleanup_device()
 	[ -e $WORKDIR/device-clean ] && return
 	do_shell "umount /cache/system/ 2>/dev/null && rm -rf /cache/system 2>/dev/null"
 	do_shell "rm -f /recovery/$TARBALL"
+	if [ ! -z "$BUSYBOX_PUSH" ]; then
+		do_shell "rm $BUSYBOX 2>/dev/null"
+	fi
+	do_shell "sync"
 	[ -e $WORKDIR ] && touch $WORKDIR/device-clean 2>/dev/null || true
 }
 
@@ -93,16 +102,26 @@ usage()
 {
 	echo "usage: $(basename $0) <path to rootfs tarball> <path to android system.img> [options]\n
 	options:
-	-h|--help		this message"
+	-h|--help		this message
+	-b|--busybox		path to custom busybox (or toybox) to push/use on device"
 	exit 1
 }
 
 SUDOARGS="$@"
 
+# Holds the path to the busybox binary on the phone we will run commands with. The default one is in the recovery user's PATH, so we'll just leave it as is.
+BUSYBOX="busybox"
+
+# The busybox that we're going to push to the device
+BUSYBOX_PUSH=""
+
 while [ $# -gt 0 ]; do
 	case "$1" in
 		-h|--help)
 			usage
+			;;
+		-b|--busybox)
+			[ -n "$2" ] && BUSYBOX_PUSH=$2 shift || usage
 			;;
 	esac
 	shift
@@ -145,6 +164,12 @@ check_mounts
 WORKDIR=$(mktemp -d /tmp/rootstock-touch-install.XXXXX)
 TMPMOUNT="$WORKDIR/tmpmount"
 
+if [ ! -z "$BUSYBOX_PUSH" ]; then
+	echo -n "Pushing Busybox to device ... "
+	send_busybox
+	echo "[done]"
+fi
+
 echo -n "transfering rootfs tarball ... "
 adb push $TARPATH /recovery/ >/dev/null 2>&1
 echo "[done]"
@@ -154,7 +179,7 @@ prepare_ubuntu_system
 echo "[done]"
 
 echo -n "unpacking rootfs tarball to system-image ... "
-do_shell "cd /cache/system && zcat /recovery/$TARBALL | tar xf -"
+do_shell "cd /cache/system && $BUSYBOX tar xf /recovery/$TARBALL"
 do_shell "[ -e /cache/system/SWAP.swap ] && mv /cache/system/SWAP.swap /data/SWAP.img"
 echo "[done]"
 
