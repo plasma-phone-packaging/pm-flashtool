@@ -85,7 +85,7 @@ cleanup_device()
 {
 	[ -e $WORKDIR/device-clean ] && return
 	do_shell "umount /data/recovery/system/ 2>/dev/null && rm -rf /data/recovery/system 2>/dev/null"
-	do_shell "rm -f /recovery/$TARBALL"
+	do_shell "rm -f /data/$TARBALL"
 	if [ ! -z "$BUSYBOX_PUSH" ]; then
 		do_shell "rm $BUSYBOX 2>/dev/null"
 	fi
@@ -168,7 +168,7 @@ if [ ! -z "$BUSYBOX_PUSH" ]; then
 fi
 
 echo -n "transfering rootfs tarball ... "
-adb push $TARPATH /recovery/ >/dev/null 2>&1
+adb push $TARPATH /data/ >/dev/null 2>&1
 echo "[done]"
 
 echo -n "preparing system-image on device ... "
@@ -176,7 +176,7 @@ prepare_ubuntu_system
 echo "[done]"
 
 echo -n "unpacking rootfs tarball to system-image ... "
-do_shell "cd /data/recovery/system && $BUSYBOX tar xf /recovery/$TARBALL"
+do_shell "cd /data/recovery/system && $BUSYBOX tar xf /data/$TARBALL"
 do_shell "[ -e /data/recovery/system/SWAP.swap ] && mv /data/recovery/system/SWAP.swap /data/SWAP.img"
 echo "[done]"
 
