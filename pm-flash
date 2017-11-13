@@ -56,6 +56,11 @@ download()
         wget -c "http://images.plasma-mobile.org/arch-rootfs/pm-rootfs-$ROOTFS_VERSION.tar.gz" -P rootfs
         ln -sf rootfs/pm-rootfs-$ROOTFS_VERSION.tar.gz pm-rootfs-latest.tar.gz
     fi
+    if [ "$2" == "edge" ]; then
+        ROOTFS_VERSION=`curl http://images.plasma-mobile.org/edge_rootfs_stamp 2> /dev/null`
+        wget -c "http://images.plasma-mobile.org/edge-rootfs/pm-rootfs-$ROOTFS_VERSION.tar.gz" -P rootfs
+        ln -sf rootfs/pm-rootfs-$ROOTFS_VERSION.tar.gz pm-rootfs-latest.tar.gz
+    fi
     echo "[done]"
 
     # This will change in future
