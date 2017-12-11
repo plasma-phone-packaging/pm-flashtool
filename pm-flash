@@ -69,6 +69,7 @@ download()
     wget -c "http://images.plasma-mobile.org/halium/$1/recovery.img" -P $1
     wget -c "http://images.plasma-mobile.org/halium/$1/$HALIUM_VERSION/system.img" -P $1/$HALIUM_VERSION
     wget -c "http://images.plasma-mobile.org/halium/$1/$HALIUM_VERSION/boot.img" -P $1/$HALIUM_VERSION
+    rm -f $1/latest
     ln -sf $HALIUM_VERSION $1/latest
     echo "[done]"
 
