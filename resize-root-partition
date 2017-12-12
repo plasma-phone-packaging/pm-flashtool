@@ -1,0 +1,23 @@
+#!/bin/sh
+
+wait_for_device() {
+    echo -n "Waiting for device in recovery mode "
+    while test -z "$(adb shell echo '1' 2>/dev/null)"
+    do
+        echo -n ".";
+        sleep 3;
+    done
+    echo "[done]"
+}
+
+do_shell()
+{
+	adb shell "$@"
+}
+
+wait_for_device
+
+echo -n "Increasing the rootfs size to 4G ... "
+do_shell "e2fsck -yf /data/rootfs.img"
+do_shell "resize2fs -f /data/rootfs.img 1024000"
+echo "[done]"

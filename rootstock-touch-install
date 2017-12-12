@@ -162,11 +162,15 @@ echo -n "adding android system image to installation ... "
 convert_android_img
 ANDROID_DIR="/data"
 adb push $SYSIMAGE $ANDROID_DIR >/dev/null 2>&1
-do_shell "ls -l /data/"
 echo "[done]"
 
 echo -n "cleaning up on device ... "
 cleanup_device
+echo "[done]"
+
+echo -n "Increasing the rootfs size to 4G ... "
+do_shell "e2fsck -yf /data/rootfs.img"
+do_shell "resize2fs -f /data/rootfs.img 1024000"
 echo "[done]"
 
 echo -n "rebooting into bootloader mode and flashing boot.img ... "
