@@ -164,6 +164,10 @@ ANDROID_DIR="/data"
 adb push $SYSIMAGE $ANDROID_DIR >/dev/null 2>&1
 echo "[done]"
 
+echo -n "Setting up default password for phablet user to 1234 ... "
+do_shell "echo phablet:1234 | chroot /cache/system /usr/sbin/chpasswd"
+echo "[done]"
+
 echo -n "cleaning up on device ... "
 cleanup_device
 echo "[done]"
