@@ -180,7 +180,7 @@ echo "[done]"
 echo -n "Adding timekeep timestamp ... "
 date +%s > /tmp/timekeep.stamp
 do_shell "mkdir -p /data/time"
-adb push /tmp/timekeep.stamp /tmp/time/timekeep
+adb push /tmp/timekeep.stamp /data/time/timekeep
 echo "[done]"
 
 echo -n "rebooting into bootloader mode and flashing boot.img ... "
