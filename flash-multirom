@@ -27,15 +27,15 @@ function download {
     mkdir -p $CACHEDIR/ && pushd $CACHEDIR/
     rm -f *
     # timestamp file for latest images
-    wget -c http://neon.plasma-mobile.org/cm_stamp
-    wget -c http://neon.plasma-mobile.org/rootfs_stamp
+    wget -c http://images.plasma-mobile.org/cm_stamp
+    wget -c http://images.plasma-mobile.org/rootfs_stamp
     # lxc userspace tools
     wget -c http://neon.plasma-mobile.org/lxc-android.tar.gz
     # rootfs for plasma mobile
-    wget -c http://neon.plasma-mobile.org/rootfs/pm-rootfs-`cat rootfs_stamp`.tar.gz
+    wget -c http://images.plasma-mobile.org/rootfs/pm-rootfs-`cat rootfs_stamp`.tar.gz
     ln -s pm-rootfs-`cat rootfs_stamp`.tar.gz plasma-rootfs.tar.gz
     # udev rules specific to device
-    wget -c http://neon.plasma-mobile.org/devices/$1/55-$1.rules
+    wget -c http://images.plasma-mobile.org/devices/$1/55-$1.rules
     # config for lxc container
     wget -c https://raw.githubusercontent.com/plasma-phone-packaging/CM/master/lxc-system-config
     popd
