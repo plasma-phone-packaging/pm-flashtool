@@ -1,21 +1,12 @@
 # pm-flashtool
-Tool for Flashing CM+PM as LXC Container
+Tool for flashing Plasma Mobile and Halium
 
 # Typical workflow.. (How it works)
 
 - Waits for device to be in fastboot mode,
-- Downloads twrp recovery and flashes into recovery
+- Downloads Plama Mobile rootfs and the  boot, recovery, and system images 
 - Boots into recovery
-- Downloads cm.zip and pushes it to /cache
-- Creates command file with
-```
---update_package=/sdcard/cm.zip
-```
-- pushes it to /cache/recovery/command
-- Reboots into recovery
-- recovery installs cm.zip
-- reboots in system
-- Installs lxc and plasma rootfs
+- Installs Plasma Mobile on the device using `rootstock-toch-install`
 
 # Howto use
 
@@ -33,21 +24,15 @@ Without options pm-flash script downloads all files again, pass '-c' to let it u
 ./pm-flash -c
 ```
 
-This
+This won't download the required files again and use previously downloaded files instead. 
 
-a) Downloads the files required in ~/.cache/plasmaphone
-b) Flashes cyanogenmod
-c) Puts togather lxc and plasma rootfs
 
-After that you can run
+After that your phone should reboot into Plasma Mobile.
 
-```
-adb root
-adb shell
-lxc-start -n system -F
-```
+To get a console login, try
 
-to get login console and plasma started
+`$ ssh phablet@10.15.19.82`
+
 
 Multirom version
 ----------------
