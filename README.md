@@ -32,8 +32,3 @@ After that your phone should reboot into Plasma Mobile.
 To get a console login, try
 
 `$ ssh phablet@10.15.19.82`
-
-
-Multirom version
-----------------
-See instructions here : https://community.kde.org/Plasma/Mobile/CyanogenModBase#MultiROM_instructions_.28For_dualboot.29
