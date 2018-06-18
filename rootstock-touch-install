@@ -187,5 +187,5 @@ echo -n "rebooting into bootloader mode and flashing boot.img ... "
 adb reboot bootloader
 fastboot getvar product 2> /dev/null
 fastboot flash boot $BOOTIMG 2> /dev/null
-fastboot continue 2> /dev/bull
+fastboot continue 2> /dev/null
 echo "[done]"
