@@ -90,7 +90,11 @@ flash-phone()
 
     fastboot boot $CACHEDIR/$1/recovery.img
     wait_for_device
-    ./rootstock-touch-install `readlink -f $CACHEDIR/pm-rootfs-latest.tar.gz` $CACHEDIR/$1/latest/system.img $CACHEDIR/$1/latest/boot.img
+    if [ "$(uname)" == "Darwin" ]; then
+        ./rootstock-touch-install `greadlink -f $CACHEDIR/pm-rootfs-latest.tar.gz` $CACHEDIR/$1/latest/system.img $CACHEDIR/$1/latest/boot.img
+    else
+        ./rootstock-touch-install `readlink -f $CACHEDIR/pm-rootfs-latest.tar.gz` $CACHEDIR/$1/latest/system.img $CACHEDIR/$1/latest/boot.img
+    fi
 }
 
 echo "Waiting for device to be in the fastboot mode"
@@ -118,6 +122,14 @@ while getopts "cp:" opt; do
       ;;
   esac
 done
+
+if [ "$(uname)" == "Darwin" ]; then
+    if [ ! "$(command -v wget)" ] || [ ! "$(command -v greadlink)" ]; then
+        echo "You are on $(uname) without wget and/or greadlink."
+        echo "Install wget (brew install wget) and/or greadlink (brew install coreutils), then re-run this script."
+        exit 1
+    fi
+fi
 
 if [ -z "$NOCACHE" ]; then
 	download $DEVICE_NAME $PLATFORM
