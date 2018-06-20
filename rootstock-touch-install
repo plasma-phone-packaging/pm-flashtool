@@ -28,8 +28,9 @@ BOOTIMG=$3
 
 check_prereq()
 {
-	if [ ! -x $(which adb) ]; then
-		echo "please install the android-tools-adb packages" && exit 1
+	if [ ! $(which make_ext4fs) ] || [ ! -x $(which simg2img) ] || \
+		[ ! -x $(which adb) ]; then
+		echo "please install the android-tools-fsutils and android-tools-adb packages" && exit 1
 	fi
 }
 
@@ -41,21 +42,25 @@ do_shell()
 convert_android_img()
 {
 	if file $SYSIMG | grep -v ": Linux rev 1.0 ext4" >/dev/null; then
+	    echo "Converting sparse image to contiguious image"
 		simg2img $SYSIMG $WORKDIR/system.img.raw
 		mkdir $TMPMOUNT
 		mount -t ext4 -o loop $WORKDIR/system.img.raw $TMPMOUNT
-		make_ext4fs -l 120M $WORKDIR/system.img $TMPMOUNT >/dev/null 2>&1
+		IMAGE_SIZE=`wc -c < $SYSIMG`
+		make_ext4fs -l $IMAGE_SIZE $WORKDIR/system.img $TMPMOUNT
 		SYSIMAGE=$WORKDIR/system.img
 	else
 		SYSIMAGE=$SYSIMG
 	fi
 }
 
+send_busybox() {
+	adb push "$BUSYBOX_PUSH" "/data/"
+	BUSYBOX="/data/`basename $BUSYBOX_PUSH`"
+}
+
 check_mounts(){
 	MOUNTS=$(do_shell "cat /proc/mounts")
-	if ! grep -qs '/cache' $MOUNTS; then
-		do_shell "mount /cache"
-	fi
 	if ! grep -qs '/data' $MOUNTS; then
 		do_shell "mount /data"
 	fi
@@ -65,14 +70,15 @@ check_mounts(){
 prepare_ubuntu_system()
 {
 	do_shell "rm -f /data/rootfs.img"
-	do_shell "dd if=/dev/zero of=/data/rootfs.img seek=500K bs=4096 count=0 >/dev/null 2>&1"
+	do_shell "dd if=/dev/zero of=/data/rootfs.img seek=511K bs=4096 count=0 >/dev/null 2>&1"
 	do_shell "mkfs.ext2 -F /data/rootfs.img >/dev/null 2>&1"
-	do_shell "mkdir -p /cache/system"
-	do_shell "mount -o loop /data/rootfs.img /cache/system/"
+	do_shell "mkdir -p /data/recovery/system"
+	do_shell "mount -t ext4 -o loop /data/rootfs.img /data/recovery/system/"
 }
 
 cleanup()
 {
+	echo "Cleaning up... "
 	mount | grep -q $TMPMOUNT 2>/dev/null && umount $TMPMOUNT
 	cleanup_device
 	rm -rf $WORKDIR
@@ -82,8 +88,12 @@ cleanup()
 cleanup_device()
 {
 	[ -e $WORKDIR/device-clean ] && return
-	do_shell "umount /cache/system/ 2>/dev/null && rm -rf /cache/system 2>/dev/null"
-	do_shell "rm -f /recovery/$TARBALL"
+	do_shell "umount /data/recovery/system/ 2>/dev/null && rm -rf /data/recovery/system 2>/dev/null"
+	do_shell "rm -f /data/$TARBALL"
+	if [ ! -z "$BUSYBOX_PUSH" ]; then
+		do_shell "rm $BUSYBOX 2>/dev/null"
+	fi
+	do_shell "sync"
 	[ -e $WORKDIR ] && touch $WORKDIR/device-clean 2>/dev/null || true
 }
 
@@ -93,16 +103,26 @@ usage()
 {
 	echo "usage: $(basename $0) <path to rootfs tarball> <path to android system.img> [options]\n
 	options:
-	-h|--help		this message"
+	-h|--help		this message
+	-b|--busybox		path to custom busybox (or toybox) to push/use on device"
 	exit 1
 }
 
 SUDOARGS="$@"
 
+# Holds the path to the busybox binary on the phone we will run commands with. The default one is in the recovery user's PATH, so we'll just leave it as is.
+BUSYBOX="busybox"
+
+# The busybox that we're going to push to the device
+BUSYBOX_PUSH=""
+
 while [ $# -gt 0 ]; do
 	case "$1" in
 		-h|--help)
 			usage
+			;;
+		-b|--busybox)
+			[ -n "$2" ] && BUSYBOX_PUSH=$2 shift || usage
 			;;
 	esac
 	shift
@@ -145,8 +165,14 @@ check_mounts
 WORKDIR=$(mktemp -d /tmp/rootstock-touch-install.XXXXX)
 TMPMOUNT="$WORKDIR/tmpmount"
 
+if [ ! -z "$BUSYBOX_PUSH" ]; then
+	echo -n "Pushing Busybox to device ... "
+	send_busybox
+	echo "[done]"
+fi
+
 echo -n "transfering rootfs tarball ... "
-adb push $TARPATH /recovery/ >/dev/null 2>&1
+adb push $TARPATH /data/ >/dev/null 2>&1
 echo "[done]"
 
 echo -n "preparing system-image on device ... "
@@ -154,8 +180,8 @@ prepare_ubuntu_system
 echo "[done]"
 
 echo -n "unpacking rootfs tarball to system-image ... "
-do_shell "cd /cache/system && zcat /recovery/$TARBALL | tar xf -"
-do_shell "[ -e /cache/system/SWAP.swap ] && mv /cache/system/SWAP.swap /data/SWAP.img"
+do_shell "cd /data/recovery/system && $BUSYBOX tar xf /data/$TARBALL"
+do_shell "[ -e /data/recovery/system/SWAP.swap ] && mv /data/recovery/system/SWAP.swap /data/SWAP.img || exit 0"
 echo "[done]"
 
 echo -n "adding android system image to installation ... "
