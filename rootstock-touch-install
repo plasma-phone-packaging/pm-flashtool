@@ -168,6 +168,14 @@ echo -n "Setting up default password for phablet user to 1234 ... "
 do_shell "echo phablet:1234 | chroot /cache/system /usr/sbin/chpasswd"
 echo "[done]"
 
+## if demo?
+./fetch-demo.sh demo.tar
+adb push demo.tar /data >/dev/null 2>&1
+do_shell "tar xvf /data/demo.tar -C /cache/system/home/phablet/"
+do_shell "chown 32011 -R /cache/system/home/phablet/"
+do_shell "rm /data/demo.tar"
+## fi
+
 echo -n "cleaning up on device ... "
 cleanup_device
 echo "[done]"
