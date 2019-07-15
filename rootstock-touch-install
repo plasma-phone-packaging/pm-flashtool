@@ -68,6 +68,8 @@ prepare_ubuntu_system()
 	do_shell "dd if=/dev/zero of=/data/rootfs.img seek=500K bs=4096 count=0 >/dev/null 2>&1"
 	do_shell "mkfs.ext2 -F /data/rootfs.img >/dev/null 2>&1"
 	do_shell "mkdir -p /cache/system"
+	do_shell "e2fsck -yf /data/rootfs.img"
+	do_shell "resize2fs -f /data/rootfs.img 4096000"
 	do_shell "mount -o loop /data/rootfs.img /cache/system/"
 }
 
@@ -178,11 +180,6 @@ do_shell "rm /data/demo.tar"
 
 echo -n "cleaning up on device ... "
 cleanup_device
-echo "[done]"
-
-echo -n "Increasing the rootfs size to 4G ... "
-do_shell "e2fsck -yf /data/rootfs.img"
-do_shell "resize2fs -f /data/rootfs.img 1024000"
 echo "[done]"
 
 echo -n "Adding timekeep timestamp ... "
