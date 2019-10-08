@@ -148,7 +148,7 @@ WORKDIR=$(mktemp -d /tmp/rootstock-touch-install.XXXXX)
 TMPMOUNT="$WORKDIR/tmpmount"
 
 echo -n "transfering rootfs tarball ... "
-adb push $TARPATH /recovery/ >/dev/null 2>&1
+adb push $TARPATH /data >/dev/null 2>&1
 echo "[done]"
 
 echo -n "preparing system-image on device ... "
@@ -156,7 +156,7 @@ prepare_ubuntu_system
 echo "[done]"
 
 echo -n "unpacking rootfs tarball to system-image ... "
-do_shell "cd /cache/system && zcat /recovery/$TARBALL | tar xf -"
+do_shell "cd /cache/system && zcat /data/$TARBALL | tar xf -"
 do_shell "[ -e /cache/system/SWAP.swap ] && mv /cache/system/SWAP.swap /data/SWAP.img"
 echo "[done]"
 
