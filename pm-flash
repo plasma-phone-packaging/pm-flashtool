@@ -48,17 +48,17 @@ download()
     echo "Downloading latest rootfs ... "
     if [ "$2" == "neon" ]; then
         ROOTFS_VERSION=`curl https://images.plasma-mobile.org/rootfs_stamp 2> /dev/null`
-        wget -c "https://images.plasma-mobile.org/rootfs/pm-rootfs-$ROOTFS_VERSION.tar.gz" -P rootfs
+        aria2c -k 1M -s 32768 -j 32768 -x 16 -o rootfs/pm-rootfs-$ROOTFS_VERSION.tar.gz "https://images.plasma-mobile.org/rootfs/pm-rootfs-$ROOTFS_VERSION.tar.gz"
         ln -sf rootfs/pm-rootfs-$ROOTFS_VERSION.tar.gz pm-rootfs-latest.tar.gz
     fi
     if [ "$2" == "arch" ]; then
         ROOTFS_VERSION=`curl https://images.plasma-mobile.org/arch_rootfs_stamp 2> /dev/null`
-        wget -c "https://images.plasma-mobile.org/arch-rootfs/pm-rootfs-$ROOTFS_VERSION.tar.gz" -P rootfs
+        aria2c -k 1M -s 32768 -j 32768 -x 16 -o rootfs/pm-rootfs-$ROOTFS_VERSION.tar.gz "https://images.plasma-mobile.org/arch-rootfs/pm-rootfs-$ROOTFS_VERSION.tar.gz"
         ln -sf rootfs/pm-rootfs-$ROOTFS_VERSION.tar.gz pm-rootfs-latest.tar.gz
     fi
     if [ "$2" == "edge" ]; then
         ROOTFS_VERSION=`curl https://images.plasma-mobile.org/edge_rootfs_stamp 2> /dev/null`
-        wget -c "https://images.plasma-mobile.org/edge-rootfs/pm-rootfs-$ROOTFS_VERSION.tar.gz" -P rootfs
+        aria2c -k 1M -s 32768 -j 32768 -x 16 -o rootfs/pm-rootfs-$ROOTFS_VERSION.tar.gz "https://images.plasma-mobile.org/edge-rootfs/pm-rootfs-$ROOTFS_VERSION.tar.gz"
         ln -sf rootfs/pm-rootfs-$ROOTFS_VERSION.tar.gz pm-rootfs-latest.tar.gz
     fi
     echo "[done]"
@@ -66,9 +66,9 @@ download()
     # This will change in future
     echo "Downloading the latest boot, recovery, and system images  ... "
     HALIUM_VERSION=`curl https://images.plasma-mobile.org/halium/$1/halium_stamp 2> /dev/null`
-    wget -c "https://images.plasma-mobile.org/halium/$1/recovery.img" -P $1
-    wget -c "https://images.plasma-mobile.org/halium/$1/$HALIUM_VERSION/system.img" -P $1/$HALIUM_VERSION
-    wget -c "https://images.plasma-mobile.org/halium/$1/$HALIUM_VERSION/boot.img" -P $1/$HALIUM_VERSION
+    aria2c -k 1M -s 32768 -j 32768 -x 16 -o $1/recovery.img "https://images.plasma-mobile.org/halium/$1/recovery.img"
+    aria2c -k 1M -s 32768 -j 32768 -x 16 -o $1/$HALIUM_VERSION/system.img "https://images.plasma-mobile.org/halium/$1/$HALIUM_VERSION/system.img"
+    aria2c -k 1M -s 32768 -j 32768 -x 16 -o $1/$HALIUM_VERSION/boot.img "https://images.plasma-mobile.org/halium/$1/$HALIUM_VERSION/boot.img"
     rm -f $1/latest
     ln -sf $HALIUM_VERSION $1/latest
     echo "[done]"
