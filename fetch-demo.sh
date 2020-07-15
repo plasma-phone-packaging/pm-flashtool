@@ -5,7 +5,7 @@ set -e
 output_tar=$1
 
 rm -rf fetch-demo-data
-git clone https://anongit.kde.org/scratch/apol/fetch-demo-data.git
+git clone https://invent.kde.org/apol/fetch-demo-data.git
 
 rm -rf OUTPUT
 mkdir OUTPUT
