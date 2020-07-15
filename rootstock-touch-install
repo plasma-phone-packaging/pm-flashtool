@@ -23,7 +23,7 @@
 set -e
 
 TARPATH=$1
-SYSIMG=$2
+SYSIMAGE=$2
 BOOTIMG=$3
 
 check_prereq()
@@ -36,19 +36,6 @@ check_prereq()
 do_shell()
 {
 	adb shell "$@"
-}
-
-convert_android_img()
-{
-	if file $SYSIMG | grep -v ": Linux rev 1.0 ext4" >/dev/null; then
-		simg2img $SYSIMG $WORKDIR/system.img.raw
-		mkdir $TMPMOUNT
-		mount -t ext4 -o loop $WORKDIR/system.img.raw $TMPMOUNT
-		make_ext4fs -l 120M $WORKDIR/system.img $TMPMOUNT >/dev/null 2>&1
-		SYSIMAGE=$WORKDIR/system.img
-	else
-		SYSIMAGE=$SYSIMG
-	fi
 }
 
 check_mounts(){
@@ -127,8 +114,8 @@ case ${TARTYPE#application\/} in
 	;;
 esac
 
-if [ -z "$SYSIMG" ] || \
-	[ "$(file --mime-type $SYSIMG|sed 's/^.* //')" != "application/octet-stream" ]; then
+if [ -z "$SYSIMAGE" ] || \
+	[ "$(file --mime-type $SYSIMAGE|sed 's/^.* //')" != "application/octet-stream" ]; then
 	echo "need valid system.img path and type application/octet-stream"
 	usage
 fi
@@ -161,7 +148,6 @@ do_shell "[ -e /cache/system/SWAP.swap ] && mv /cache/system/SWAP.swap /data/SWA
 echo "[done]"
 
 echo -n "adding android system image to installation ... "
-convert_android_img
 ANDROID_DIR="/data"
 adb push $SYSIMAGE $ANDROID_DIR >/dev/null 2>&1
 echo "[done]"
