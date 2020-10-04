@@ -90,7 +90,7 @@ flash-phone()
 
     fastboot boot $CACHEDIR/$1/recovery.img
     wait_for_device
-    ./rootstock-touch-install `readlink -f $CACHEDIR/pm-rootfs-latest.tar.gz` $CACHEDIR/$1/latest/system.img $CACHEDIR/$1/latest/boot.img
+    ./rootstock-touch-install $CACHEDIR/pm-rootfs-latest.tar.gz $CACHEDIR/$1/latest/system.img $CACHEDIR/$1/latest/boot.img
 }
 
 echo "Waiting for device to be in the fastboot mode"
