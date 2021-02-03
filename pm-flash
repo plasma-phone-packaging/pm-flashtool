@@ -47,7 +47,7 @@ download()
 
     echo "Downloading latest rootfs ... "
     [ -z `command -v curl` ] && (echo "required package 'curl' is missing, install via your package manager" && exit)
-    ping images.plasma-mobile.org -c 1 -W 1 > /dev/null 2>&1 || echo "failed to connect to 'images.plasma-mobile.org', check your internet connection"
+    ping images.plasma-mobile.org -c 1 -W 1 > /dev/null 2>&1 || (echo "failed to connect to 'images.plasma-mobile.org', check your internet connection" && exit)
 
     if [ "$2" == "neon" ]; then
         ROOTFS_NAME=`curl -s https://images.plasma-mobile.org/rootfs/ | grep -E -o "pm-rootfs-[0-9-]+\.tar\.gz" | sort | tail -n 1`
