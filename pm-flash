@@ -46,20 +46,23 @@ download()
     mkdir -p $CACHEDIR/ && pushd $CACHEDIR/
 
     echo "Downloading latest rootfs ... "
+    [ -z `command -v curl` ] && (echo "required package 'curl' is missing, install via your package manager" && exit)
+    ping images.plasma-mobile.org -c 1 -W 1 > /dev/null 2>&1 || (echo "failed to connect to 'images.plasma-mobile.org', check your internet connection" && exit)
+
     if [ "$2" == "neon" ]; then
-        ROOTFS_VERSION=`curl https://images.plasma-mobile.org/rootfs_stamp 2> /dev/null`
-        wget -c "https://images.plasma-mobile.org/rootfs/pm-rootfs-$ROOTFS_VERSION.tar.gz" -P rootfs
-        ln -sf rootfs/pm-rootfs-$ROOTFS_VERSION.tar.gz pm-rootfs-latest.tar.gz
+        ROOTFS_NAME=`curl -s https://images.plasma-mobile.org/rootfs/ | grep -E -o "pm-rootfs-[0-9-]+\.tar\.gz" | sort | tail -n 1`
+        wget -c "https://images.plasma-mobile.org/rootfs/$ROOTFS_NAME" -P rootfs
+        ln -sf rootfs/pm-rootfs-$ROOTFS_NAME pm-rootfs-latest.tar.gz
     fi
     if [ "$2" == "arch" ]; then
-        ROOTFS_VERSION=`curl https://images.plasma-mobile.org/arch_rootfs_stamp 2> /dev/null`
-        wget -c "https://images.plasma-mobile.org/arch-rootfs/pm-rootfs-$ROOTFS_VERSION.tar.gz" -P rootfs
-        ln -sf rootfs/pm-rootfs-$ROOTFS_VERSION.tar.gz pm-rootfs-latest.tar.gz
+        ROOTFS_NAME=`curl -s https://images.plasma-mobile.org/arch-rootfs/ | grep -E -o "pm-rootfs-[0-9-]+\.tar\.gz" | sort | tail -n 1`
+        wget -c "https://images.plasma-mobile.org/arch-rootfs/$ROOTFS_NAME" -P rootfs
+        ln -sf rootfs/pm-rootfs-$ROOTFS_NAME pm-rootfs-latest.tar.gz
     fi
     if [ "$2" == "edge" ]; then
-        ROOTFS_VERSION=`curl https://images.plasma-mobile.org/edge_rootfs_stamp 2> /dev/null`
-        wget -c "https://images.plasma-mobile.org/edge-rootfs/pm-rootfs-$ROOTFS_VERSION.tar.gz" -P rootfs
-        ln -sf rootfs/pm-rootfs-$ROOTFS_VERSION.tar.gz pm-rootfs-latest.tar.gz
+        ROOTFS_NAME=`curl -s https://images.plasma-mobile.org/edge-rootfs/ | grep -E -o "pm-rootfs-[0-9-]+\.tar\.gz" | sort | tail -n 1`
+        wget -c "https://images.plasma-mobile.org/edge-rootfs/$ROOTFS_NAME" -P rootfs
+        ln -sf rootfs/pm-rootfs-$ROOTFS_NAME pm-rootfs-latest.tar.gz
     fi
     echo "[done]"
 
