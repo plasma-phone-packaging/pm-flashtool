@@ -52,17 +52,17 @@ download()
     if [ "$2" == "neon" ]; then
         ROOTFS_NAME=`curl -s https://images.plasma-mobile.org/rootfs/ | grep -E -o "pm-rootfs-[0-9-]+\.tar\.gz" | sort | tail -n 1`
         wget -c "https://images.plasma-mobile.org/rootfs/$ROOTFS_NAME" -P rootfs
-        ln -sf rootfs/pm-rootfs-$ROOTFS_NAME.tar.gz pm-rootfs-latest.tar.gz
+        ln -sf rootfs/pm-rootfs-$ROOTFS_NAME pm-rootfs-latest.tar.gz
     fi
     if [ "$2" == "arch" ]; then
         ROOTFS_NAME=`curl -s https://images.plasma-mobile.org/arch-rootfs/ | grep -E -o "pm-rootfs-[0-9-]+\.tar\.gz" | sort | tail -n 1`
         wget -c "https://images.plasma-mobile.org/arch-rootfs/$ROOTFS_NAME" -P rootfs
-        ln -sf rootfs/pm-rootfs-$ROOTFS_NAME.tar.gz pm-rootfs-latest.tar.gz
+        ln -sf rootfs/pm-rootfs-$ROOTFS_NAME pm-rootfs-latest.tar.gz
     fi
     if [ "$2" == "edge" ]; then
         ROOTFS_NAME=`curl -s https://images.plasma-mobile.org/edge-rootfs/ | grep -E -o "pm-rootfs-[0-9-]+\.tar\.gz" | sort | tail -n 1`
         wget -c "https://images.plasma-mobile.org/edge-rootfs/$ROOTFS_NAME" -P rootfs
-        ln -sf rootfs/pm-rootfs-$ROOTFS_NAME.tar.gz pm-rootfs-latest.tar.gz
+        ln -sf rootfs/pm-rootfs-$ROOTFS_NAME pm-rootfs-latest.tar.gz
     fi
     echo "[done]"
 
